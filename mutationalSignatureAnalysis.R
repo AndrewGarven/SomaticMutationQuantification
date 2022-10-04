@@ -1,4 +1,7 @@
 BiocManager::install("BSgenome.Hsapiens.UCSC.hg38")
+install.packages('mutSignatures')
+install.packages('dplyr')
+
 library('BSgenome.Hsapiens.UCSC.hg38')
 library('mutSignatures')
 library('readr')
@@ -24,7 +27,7 @@ BLCA.params <-
   mutSignatures::setMutClusterParams( 
     num_processesToExtract = num.sign,    
     num_totIterations = 100,             
-    num_parallelCores = 4)
+    num_parallelCores = 16)
 
 BLCA.analysis <- 
   decipherMutationalProcesses(input = BLCA.counts,
