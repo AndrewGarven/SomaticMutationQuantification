@@ -1,0 +1,96 @@
+---
+title: "Mutational Signature Analysis in TCGA - BLCA"
+output: html_notebook
+---
+
+# Dependancies
+
+```{r}
+library('sigminer')
+library('TCGAmutations')
+library('NMF')
+library('pheatmap')
+```
+
+
+# BLCA data download
+
+```{r}
+TCGAmutations::tcga_available()
+BLCA.MC3 <- TCGAmutations::tcga_load(study = 'BLCA')
+BLCA.Firehose <- TCGAmutations::tcga_load(study = 'BLCA', source = 'Firehose')
+
+BLCA.MC3 <- maftools::subsetMaf(BLCA.MC3,
+                                tsb = as.character(sample(BLCA.MC3@variants.per.sample$Tumor_Sample_Barcode, 411))
+)
+
+BLCA.Firehose <- maftools::subsetMaf(BLCA.Firehose,
+                                tsb = as.character(sample(BLCA.Firehose@variants.per.sample$Tumor_Sample_Barcode, 394))
+)
+
+saveRDS(BLCA.MC3, file = 'Data/BLCAMC3.rds')
+saveRDS(BLCA.MC3, file = 'Data/BLCAFirehose.rds')
+```
+
+# Tally Components
+
+```{r}
+BLCA.MC3.Tally <- sig_tally(
+  BLCA.MC3,
+  ref_genome = 'BSgenome.Hsapiens.UCSC.hg19',
+  useSyn = TRUE
+)
+
+BLCA.Firehose.Tally <- sig_tally(
+  BLCA.Firehose,
+  ref_genome = 'BSgenome.Hsapiens.UCSC.hg19',
+  useSyn = TRUE
+)
+```
+
+# Determine Signature Count
+
+```{r}
+BLCA.MC3.Estimate <- sig_estimate(
+  BLCA.MC3.Tally$nmf_matrix,
+  range = 2:10,
+  nrun = 10,
+  use_random = FALSE,
+  cores = 16,
+  verbose = TRUE
+)
+show_sig_number_survey2(BLCA.MC3.Estimate$survey)
+show_sig_number_survey(BLCA.MC3.Estimate$survey, right_y = NULL)
+show_sig_number_survey(BLCA.MC3.Estimate$survey)
+```
+
+# Extract Signatures
+
+```{r}
+BLCA.MC3.sig <- sig_auto_extract(BLCA.MC3.Tally$nmf_matrix,
+  nrun = 50,
+  cores = 32
+)
+```
+
+# Match Signatures
+
+```{r}
+BLCA.MC3.sim <- get_sig_similarity(BLCA.MC3.sig)
+pheatmap::pheatmap(BLCA.MC3.sim$similarity)
+BLCA.MC3.Exposure <- get_sig_exposure(BLCA.MC3.sig)[,1:7]
+```
+
+# Signature Profile
+
+```{r}
+# Show cosmic feature extraction
+show_sig_profile(BLCA.MC3.sig, mode = 'SBS', style = "cosmic", x_label_angle = 90)
+```
+
+# Exposure Profile
+
+```{r}
+show_sig_exposure(BLCA.MC3.sig, style = 'cosmic')
+```
+

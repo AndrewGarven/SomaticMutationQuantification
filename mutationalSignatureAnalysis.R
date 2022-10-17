@@ -26,8 +26,8 @@ num.sign <- 4
 BLCA.params <- 
   mutSignatures::setMutClusterParams( 
     num_processesToExtract = num.sign,    
-    num_totIterations = 100,             
-    num_parallelCores = 16)
+    num_totIterations = 1,             
+    num_parallelCores = 126)
 
 BLCA.analysis <- 
   decipherMutationalProcesses(input = BLCA.counts,
